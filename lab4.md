@@ -22,7 +22,7 @@
 
         ```
         [   2398.704379] RIP [<ffffffffffffffbc230653>] kfree+0x53/0x170
-        ```
+        ``````
 
         Z powyższych komunikatów można wywnioskować, że problem pojawił się przy wywoływaniu funkcji kfree() w funkcji broken_read().
 
