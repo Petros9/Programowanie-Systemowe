@@ -352,14 +352,14 @@ $0 = "\000\000\000\000\000\020\377\377\377\377\377\377\377"
 ```
 Tablica nadal zawierała pusty string pomimo zastosowania funkcji `snprintf()`. Analiza tego miejsca pozwoliła zobaczyć, że do tej funkcji przekazywana jest len, które wynosi 0, po podstawieniu za len PROC_NUMBUF funkcja wygląda następująco:
 ```
-		char name[PROC_NUMBUF];
-		int len = 0;
+char name[PROC_NUMBUF];
+int len = 0;
 
-		if (!fcheck_files(files, fd))
-			continue;
-		rcu_read_unlock();
+if (!fcheck_files(files, fd))
+	continue;
+rcu_read_unlock();
 
-		len = snprintf(name, PROC_NUMBUF, "%u", fd); //zamiast PROC_NUMBUF było len (które wynosiło 0)
+len = snprintf(name, PROC_NUMBUF, "%u", fd); //zamiast PROC_NUMBUF było len (które wynosiło 0)
 ```
  Po naprawie przetestowano działanie:
  ```
