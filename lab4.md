@@ -54,17 +54,17 @@
         }
         ```
   
-    W miejscu oznaczonym // znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybuf".
+    W miejscu oznaczonym // znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybu
 
     W module znajdowała się także nic nie robiąca funkcja `broken_write`, a najpewniej powinna służyć do zliczania zapisów do /dev/broken, więc została ona zmodyfikowana w następujący sposób:
 
-    
+    ```
     ssize_t broken_write(struct file *filp, const char *user_buf, size_t count,loff_t *f_pos)
     {
         write_count++; // wcześniej tu tego nie było
         return 1;
     }
-    
+    ```
 
     Po wprowadzeniu modyfikacji przetestowano poprawność działania modułu:
 
