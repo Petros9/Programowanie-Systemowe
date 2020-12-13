@@ -366,7 +366,7 @@ len = snprintf(name, PROC_NUMBUF, "%u", fd); //zamiast PROC_NUMBUF było len (kt
   [root@localhost ~]# ls /proc/self/fd
   0  1  2  3
  ```
- **3. `proc/PID/environ`**
+ **3. `proc/PID/environ` brak wypisywania**
 
 Wynik działania komendy `ls proc/self/environ`
 ```
@@ -521,3 +521,45 @@ environ_read (file=0xffff88022f48e000, buf=0x7fb786265000 <error: Cannot access 
 Najpewniej w pętli while wykonują się właściwe operacje (tj. kopiowanie danych do przestrzeni użytkownika). Jako, że program nic nie zwraca można uznać, że pętla się nie wykonuje. W pętli 968 sprawdzany jest pewien warunek, który powoduje, że funkcja nie jest wykonywana. Spojrzenie na linijki 960 i 961 pokazuje źródło problemu. `env_start` oraz `env_end` są sobie równe. Należy zmienić `env_end = mm->env_start;` na `env_end = mm->env_end;`
 
 Po zaaplikowaniu tej zmiany pokazały się między innymi takie dane jak HOSTNAME, TERM, SHELL, HISTSIZE.
+
+ **3. `proc/PID/environ` problemy z częstym używaniem pliku**
+ Przy probie zapisu wyniku `cat proc/self/environ` w pętli do jakieś maszyny po jamkiś czasie zaczęły pojawiać się komunikaty:
+ ```
+ cat: /proc/self/environL Cannot allocate memory
+ ```
+ 
+ Wynik wywołania komendy `dmesg`:
+ 
+ ```
+[ 342.724198] Call Trace:
+[ 342.724690]  dump_stack+0x63/0x86
+[ 342.725207]  warn_alloc+0x111/0x130
+[ 2342.725726]  __alloc_pages_slowpath+0x290/0xac0
+[ 342.726265]  ? proc_mem_open+0x59/0x70
+[ 342.726785]  __alloc_pages_nodemask+0x18f/0x1e0
+[ 342.727323]  alloc_pages_current+0x90/0x140
+[ 342.727855]  __get_free_pages+0x9/0x40
+[ 342.728376]  environ_read+0x55/0x1d0
+ ```
+ Jak widać problem pojawia się w funkcji `environ_read()` oraz w `__get_free_pages()`.
+ 
+ W funkcji `environ_read()` znajduje się funkcja `__get_free_pages()`:
+ ```
+ page = (char *)__get_free_pages(GFP_ATOMIC, 10);
+ ```
+ Zważywszy na nazwę `page` wydawać się może, ze wystarczająca byłaby funkcja `__get_free_page()`.
+ ```
+ page = (char *)__get_free_page(GFP_KERNEL);
+ ```
+ 
+ Również można zauważyć, że we free nie jest zwalniana pamięć (w tym przypadku strona).
+ 
+ ```
+ free:
+	free_page((unsigned long)page);
+	return ret;
+}
+```
+
+Po wprowadzeniu zmian, przekompilowaniu jądra i ponownym uruchomieniu QEMU wielokrotne wykonanie `cat /proc/self/environ` nie spowodowało żadnych problemów.
+ 
