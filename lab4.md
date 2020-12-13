@@ -165,6 +165,49 @@
    
  **4. Moduł 4**
 
+Podobnie jak w powyższych przykładach moduł został skompilowany i załadowany. Wywołana została komenda `echo "abcd123" > /dev/broken` uzyskano taki wynik:
+
+```
+[root@ps2017 4]# insmod broken_module.ko
+[root@ps2017 4]# mknod /dev/broken c 899 0
+[root@ps2017 4]# cat /dev/broken
+I've recenlty read 0 numeric characters
+[root@ps2017 4]# echo "abcd123" > /dev/broken
+Segmentation fault
+```
+`Call Trace` po wywolaniu `dmesg`:
+
+```
+        [  1285.392163] Call Trace:
+        [  1285.392199] [<fffffffffffffbc400f44>] broken_write+0x44/0xb0 [broken_module]
+```
+Można z tego wywnioskować, że problem dotyczył jakiegoś wywołania w funkcji `broken_write()`. Z racji braku lepszych  pomysłów najlepsze wydawało się przeglądanie kolejno wywoływanych funkcji i patrzenie, czy nie występują tam jakieś anomalie. Taką funkcją okazała się `count_numbers()`. Zamiast podanego w argumentach wskaźnika str używano tam wskaźnika ptr ustawionego na NULL. Należało zamienić ptr na str oraz przenieść inkrementację na dół pętli (inaczej nie był by zliczany pierwszy znak w napisie). 
+
+Funkcja `int count_numbers()` po poprawie:
+
+```
+int count_numbers(char *str)
+{
+        int numbers = 0;
+
+        while (*str != 0) {
+                if (isdigit(*str))
+                        numbers++;
+                str++;
+        }
+
+        return numbers;
+}
+```
+
+Test działania:
+
+```
+[root@ps2017 4]# echo "abcd123" > /dev/broken
+[root@ps2017 4]# cat /dev/broken
+I've recenlty read 3 numeric characters
+```
+
 ## 2. GDB
  **1. `/proc/loadavg`**
  **2. `proc/PID/fd`**
