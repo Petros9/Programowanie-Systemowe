@@ -181,7 +181,7 @@ Segmentation fault
         [  1285.392163] Call Trace:
         [  1285.392199] [<fffffffffffffbc400f44>] broken_write+0x44/0xb0 [broken_module]
 ```
-Można z tego wywnioskować, że problem dotyczył jakiegoś wywołania w funkcji `broken_write()`. Z racji braku lepszych  pomysłów najlepsze wydawało się przeglądanie kolejno wywoływanych funkcji i patrzenie, czy nie występują tam jakieś anomalie. Taką funkcją okazała się `count_numbers()`. Zamiast podanego w argumentach wskaźnika str używano tam wskaźnika ptr ustawionego na NULL. Należało zamienić ptr na str oraz przenieść inkrementację na dół pętli (inaczej nie był by zliczany pierwszy znak w napisie). 
+Można z tego wywnioskować, że problem dotyczył jakiegoś wywołania w funkcji `broken_write()`. Z racji braku lepszych  pomysłów najlepsze wydawało się przeglądanie kolejno wywoływanych funkcji i patrzenie, czy nie występują tam jakieś anomalie. Taką funkcją okazała się `count_numbers()`. Zamiast podanego w argumentach wskaźnika str używano tam wskaźnika ptr ustawionego na NULL. Należało zamienić ptr na str oraz przenieść inkrementację na dół pętli (inaczej nie była by zliczana pierwsza cyfra w napisie). 
 
 Funkcja `int count_numbers()` po poprawie:
 
