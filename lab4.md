@@ -365,6 +365,5 @@ Tablica nadal zawierała pusty string pomimo zastosowania funkcji `snprintf()`. 
  ```
   [root@localhost ~]# ls /proc/self/fd
   0  1  2  3
-   
  ```
  **3. `proc/PID/environ`**
