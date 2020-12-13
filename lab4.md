@@ -27,7 +27,32 @@
         Z powyższych komunikatów można wywnioskować, że problem pojawił się przy wywoływaniu funkcji kfree() w funkcji broken_read().
 
         Funkcja broken_read():
-	
+	 ```
+        ssize_t broken_read(struct file *filp, char *user_buf, size_t count,loff_t *f_pos)
+        {
+ 	        char *mybuf = NULL;
+            int mybuf_size = 100;
+	        int len, err;
+	        mybuf = kmalloc(mybuf_size, GFP_KERNEL);
+
+	        if (!mybuf) {
+                return -ENOMEM;
+            }
+
+	        fill_buffer(mybuf, mybuf_size);
+	        len = strlen(mybuf);
+	        err = copy_to_user(user_buf, mybuf, len);
+	        kfree(mybuf); // było kfree(user_buf);
+	        read_count++;
+            
+            if (!err && *f_pos == 0) {
+                *f_pos += len;
+                return len;
+	        }
+            return 0;
+        }
+        ```
+
     W miejscu oznaczonym // znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybuf".
 
     W module znajdowała się także nic nie robiąca funkcja `broken_write`, a najpewniej powinna służyć do zliczania zapisów do /dev/broken, więc została ona zmodyfikowana w następujący sposób:
