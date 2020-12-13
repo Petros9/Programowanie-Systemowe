@@ -79,6 +79,41 @@ Po wprowadzeniu modyfikacji przetestowano poprawność działania modułu:
 
 
    2. Moduł 2
+   Postąpiono podobnie jak poprzednio, komunikaty po wywołaniu `cat /dev/broken`:
+   
+       [root@ps2017 2]# cat /dev/broken
+       Killed
+       
+   Oraz `dmesg`:
+   
+   `
+        [  3466.319942] BUG: unable to handle kernel NULL pointer dereference at (null)
+        [  3487.771975] IP: [<fffffffffffffbc4031fd>] memcpy_orig+0x9d/0x110   
+    `
+    Jak widać nastąpiło odwołanie do adresu null wewnątrz funkcji memcpy(). Możliwe, że przekazano do jakiejś funkcji jądra niezainicjolizowany wskaźnik.
+    
+   Sekcji Call Trace:
+   ```
+        [  3487.772163] Call Trace:
+        [  3487.772172] [<fffffffffffffbc400f5b>] ? vsnprintf+-xeb/0x500
+        [  3487.772214] [<fffffffffffffbc401506>] sprintf+0x56/0x70
+        [  3487.772220] [<fffffffffffffbc22fbf9>] ? kmem_cache_alloc_trace+0x159/0x1b0
+        [  3487.772223] [<fffffffffffffbc07c6225] fill_buffer+0x1e/0x30 [broken_module]
+        [  3487.772227] [<fffffffffffffbc258db7>] broken_read+0x45/0xe20 [broken_module] 
+   ```
+   Na stosie wywołań widać funkcje `fill_buffer()` oraz `broken_read()`. Najpewniej gdzieś tutaj znajduje się błąd.
+   
+   Funkcja `fill_buffer()`:
+   ```
+   	int fill_buffer(char *buf, int buf_size)
+	{
+        	sprintf(buf, "I've created a buffer of size: %d\n", buf_size);
+        	return strlen(buf); // było strlen(mybuf) który nie był ani przekazywany ani inicjalizowany w funkcji.
+	}
+   ```
+   
+   Wyniki testowe wyglądały tak samo jak w module nr 1, który znajduje się powyżej.
+   
    3. Moduł 3
    4. Moduł 4
 
