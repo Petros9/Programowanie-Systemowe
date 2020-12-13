@@ -54,7 +54,7 @@
 	        }
             return 0;
         }
-        ```
+        
 
     W miejscu oznaczonym "//" znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybuf".
 
@@ -69,7 +69,7 @@
     ```
 
     Po wprowadzeniu modyfikacji przetestowano poprawność działania modułu:
-    
+
     ```
     [root@ps2017 ~]$ echo "test" > /dev/broken
     [root@ps2017 ~]$ echo "szklanka" > /dev/broken
