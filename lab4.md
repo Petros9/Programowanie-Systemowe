@@ -391,3 +391,133 @@ LC_PAPER=pl_PL.UTF-8XDG_VTNR=2XDG_SESSION_ID=2HOSTNAME=ps2017LC_MONETARY=pl_PL.U
 }OLDPWD=/home/student_=/usr/bin/cat[student@ps2017 linux]$ 
 
 ```
+Powinny zostać wypisane zmienne środowiskowe procesu. Jest możliwe, że założenie breakpointa na funkcji `vfs_read()` może doprowadzić do odnalezienia błędu. Funkcja znajduje się w pliku fs/read_write.c
+
+```
+(gdb) b vfs_read
+Breakpoint 1 at 0xffffffff8118f330: file fs/read_write.c, line 461.
+```
+Następnie wywołano jeszcze raz komendę `cat /proc/self/environ` po czym kontynuowano aż do zatrzymania przy odczycie pliku o nazwie "environ":
+
+```
+(gdb) c
+Continuing.
+
+Breakpoint 1, vfs_read (file=0xffff88022f48e000, buf=0x7fb786265000 <error: Cannot access memory at address 0x7fb786265000>, 
+    count=131072, pos=0xffffc900019e7f20) at fs/read_write.c:461
+461	{
+(gdb) print file->f_path.dentry->d_name
+$29 = {{{hash = 2226617629, len = 7}, hash_len = 32291388701}, name = 0xffff88022f23f638 "environ"}
+```
+Jak widać pojawił się problem `Cannot access memory ...` przy wywoływaniu funkcji `vfs_read`
+Funkcja `vfs_read()`:
+```
+(gdb) list vfs_read,
+461	{
+462		ssize_t ret;
+463	
+464		if (!(file->f_mode & FMODE_READ))
+465			return -EBADF;
+466		if (!(file->f_mode & FMODE_CAN_READ))
+467			return -EINVAL;
+468		if (unlikely(!access_ok(VERIFY_WRITE, buf, count)))
+469			return -EFAULT;
+470	
+471		ret = rw_verify_area(READ, file, pos, count);
+472		if (!ret) {
+473			if (count > MAX_RW_COUNT)
+474				count =  MAX_RW_COUNT;
+475			ret = __vfs_read(file, buf, count, pos);
+476			if (ret > 0) {
+477				fsnotify_access(file);
+478				add_rchar(current, ret);
+479			}
+480			inc_syscr(current);
+481		}
+482	
+483		return ret;
+484	}
+```
+Ustawiono zatem breakpoint na funkcję `__vfs_read()` //linijka 475. Pojawił się tam podobny problem:
+
+```
+(gdb) b __vfs_read
+Breakpoint 2 at 0xffffffff8118ec30: file fs/read_write.c, line 450.
+(gdb) c
+Continuing.
+
+Breakpoint 2, __vfs_read (file=0xffff88022f48e000, buf=0x7fb786265000 <error: Cannot access memory at address 0x7fb786265000>, 
+    count=131072, pos=0xffffc900019e7f20) at fs/read_write.c:450
+```
+Przy przy ustawieniu breakpointa na funkcji `__vfs_read()` operacje zostały przeniesione do pliku `fs/proc/base.c`.
+Podczas wykonywania wnętrza funkcji pojawił się problem:
+```
+(gdb) s
+environ_read (file=0xffff88022f48e000, buf=0x7fb786265000 <error: Cannot access memory at address 0x7fb786265000>, count=131072, 
+    ppos=0xffffc900019e7f20) at fs/proc/base.c:944
+944		struct mm_struct *mm = file->private_data;
+(gdb) list environ_read,
+940	{
+941		char *page;
+942		unsigned long src = *ppos;
+943		int ret = 0;
+944		struct mm_struct *mm = file->private_data;
+945		unsigned long env_start, env_end;
+946	
+947		/* Ensure the process spawned far enough to have an environment. */
+948		if (!mm || !mm->env_end)
+949			return 0;
+950	
+951		page = (char *)__get_free_pages(GFP_ATOMIC, 10);
+952		if (!page)
+953			return -ENOMEM;
+954	
+955		ret = 0;
+956		if (!atomic_inc_not_zero(&mm->mm_users))
+957			goto free;
+958	
+959		down_read(&mm->mmap_sem);
+960		env_start = mm->env_start;
+961		env_end = mm->env_start;
+962		up_read(&mm->mmap_sem);
+963	
+964		while (count > 0) {
+965			size_t this_len, max_len;
+966			int retval;
+967	
+968			if (src >= (env_end - env_start))
+969				break;
+970	
+971			this_len = env_end - (env_start + src);
+972	
+973			max_len = min_t(size_t, PAGE_SIZE, count);
+974			this_len = min(max_len, this_len);
+975	
+976			retval = access_remote_vm(mm, (env_start + src), page, this_len, 0);
+977	
+978			if (retval <= 0) {
+979				ret = retval;
+(gdb) list
+980				break;
+981			}
+982	
+983			if (copy_to_user(buf, page, retval)) {
+984				ret = -EFAULT;
+985				break;
+986			}
+987	
+988			ret += retval;
+989			src += retval;
+990			buf += retval;
+991			count -= retval;
+992		}
+993		*ppos = src;
+994		mmput(mm);
+995	
+996	free:
+997		return ret;
+998	}
+```
+Najpewniej w pętli while wykonują się właściwe operacje (tj. kopiowanie danych do przestrzeni użytkownika). Jako, że program nic nie zwraca można uznać, że pętla się nie wykonuje. W pętli 968 sprawdzany jest pewien warunek, który powoduje, że funkcja nie jest wykonywana. Spojrzenie na linijki 960 i 961 pokazuje źródło problemu. `env_start` oraz `env_end` są sobie równe. Należy zmienić `env_end = mm->env_start;` na `env_end = mm->env_end;`
+
+Po zaaplikowaniu tej zmiany pokazały się między innymi takie dane jak HOSTNAME, TERM, SHELL, HISTSIZE.
