@@ -117,6 +117,52 @@
    Wyniki testowe wyglądały tak samo jak w module nr 1, który znajduje się powyżej.
    
  **3. Moduł 3**
+ 
+   Podobnie jak w powyższych przykładach moduł został skompilowany i załadowany. Wywołana została komenda `echo 2315 > /dev/broken`, gdzie 2315 było numerem PID powłoki bashowej, czym uzyskano taki wynik:
+   
+   ```
+   [root@ps2017 3]# echo 2315 > dev/broken
+   Killed
+   ```
+   Ponadto wyłączony został tryb root. Użycie komendy `dmesg` dało następujące rezultaty:
+   
+   ```
+   [   301.506783] The BROKEN module has been inserted
+   [   361.625998] perf: interrupt took to long (2511 > 2500), lowering kernel.perf_event_max_sample_rate to 79000  
+   [   408.976783] BUG: unable to handle kernel NULL pointer dereference ar 0000000000090b
+   [   408.976997] IP: [<ffffffffa53fd19e>] strcpy+0xe/0x20
+   ```
+   Oraz:
+   ```
+   [   408.976794] Call Trace:
+   [   408.976911] [<ffffffffc09fd304>] fill_buffer_with_process_name+0x34/0x50 [broken_module]
+   [   408.989111] [<ffffffffc069d398>] broke_write+078/0xce0 [broken_module]
+   ```
+   Można z tego wywnioskować, że błąd dotyczył funkcji `strcpy()`, którą wywołała funkcja      `fill_buffer_with_process_name()`, którą wywołała funkcja `broken_write()`
+   
+   Funkcja `fill_buffer_with_process_name()`:
+   
+   ```
+   void fill_buffer_with_process_name(long pid)
+   {
+        struct pid *selected_pid = find_get_pid(pid);
+        struct task_struct *selected_proc = pid_task(selected_pid, PIDTYPE_PID);
+
+        if (selected_proc != NULL)
+                strcpy(buf1, (char *) selected_proc->comm); // było tutaj selected_proc->pid
+	else
+                sprintf(buf1, "The process with PID: %ld cannot be found", pid);
+   }
+   ```
+   PID jest liczbą, a w powyższej funkcji był wykorzytywany jako wskaźnik. Docelowo w buf1 powinna się znaleźć nazwa procesu, która zajduje się w tablice comm[].
+   
+ Po naprawie moduł działał w następujący sposób:
+ ```
+    [root@ps2017 3]# echo 3860 > dev/broken
+    [root@ps2017 3]# cat dev/broken
+    Process name: bash
+ ```
+   
  **4. Moduł 4**
 
 ## 2. GDB
