@@ -27,6 +27,7 @@
         Z powyższych komunikatów można wywnioskować, że problem pojawił się przy wywoływaniu funkcji kfree() w funkcji broken_read().
 
         Funkcja broken_read():
+
         ```
         ssize_t broken_read(struct file *filp, char *user_buf, size_t count,loff_t *f_pos)
         {
@@ -54,6 +55,7 @@
             return 0;
         }
         ```
+
     W miejscu oznaczonym "//" znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybuf".
 
     W module znajdowała się także nic nie robiąca funkcja `broken_write`, a najpewniej powinna służyć do zliczania zapisów do /dev/broken, więc została ona zmodyfikowana w następujący sposób:
@@ -65,7 +67,9 @@
         return 1;
     }
     ```
+
     Po wprowadzeniu modyfikacji przetestowano poprawność działania modułu:
+    
     ```
     [root@ps2017 ~]$ echo "test" > /dev/broken
     [root@ps2017 ~]$ echo "szklanka" > /dev/broken
@@ -75,7 +79,7 @@
     BROKEN. Reads: 2, Writes: 14
     BROKEN. Reads: 2, Writes: 14
     ```
-    
+
    2. Moduł 2
    3. Moduł 3
    4. Moduł 4
