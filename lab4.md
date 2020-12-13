@@ -31,13 +31,13 @@
         ssize_t broken_read(struct file *filp, char *user_buf, size_t count,loff_t *f_pos)
         {
  	        char *mybuf = NULL;
-            int mybuf_size = 100;
+            	int mybuf_size = 100;
 	        int len, err;
 	        mybuf = kmalloc(mybuf_size, GFP_KERNEL);
 
 	        if (!mybuf) {
                 return -ENOMEM;
-            }
+            	}
 
 	        fill_buffer(mybuf, mybuf_size);
 	        len = strlen(mybuf);
