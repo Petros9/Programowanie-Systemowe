@@ -258,5 +258,113 @@ I've recenlty read 3 numeric characters
   [0.68 0.19 0.06 1/64 1491
   [root@localhost ~]#
  ```
-  **2. `proc/PID/fd`**
+ 
+ **2. `proc/PID/fd`**
+  Wynik działania komendy `ls /proc/self/fd` na QEMU:
+  ```
+  [root@localhost ~]# ls /proc/self/fd
+  ?  ?  ?  ?
+  ```
+  
+  Wynik działania komendy `ls /proc/self/fd` na innym urządzeniu:
+  ```
+  [student@ps2017 linux]$ ls /proc/self/fd
+  0  1  2  3
+  ```
+  Zdaje się, że dobrym początkiem byłoby zaczęcie od funkcji wywoływanych przy listowaniu danego katalogu, np. od fukncji z pliku `~/linux/fs/readdir.c`, np. `iterate_dir()`, bo jest na samym początku. 
+  ```
+ (gdb) b 
+Breakpoint 1 at 0xffffffff811a2d10: file fs/readdir.c, line 25.
+(gdb) c
+Continuing.
+  ```
+  Następnie spróbowano jeszcze raz wykonać `ls /proc/self/fd`
+  ```
+  Breakpoint 1, iterate_dir (file=0xffff88022ff63200, ctx=0xffffc90001a27ef0) at fs/readdir.c:25
+  ```
+  Następnie za pomocą polecenia `list` udało się dojść do wywołania funkcji `iterate_shared(file, ctx)` w strukturze f_ops:
+  
+  ```
+  (gdb) s
+50				res = file->f_op->iterate_shared(file, ctx);
+  ```
+ Dalej iteracja następowała po pliku fs/proc/fd.c
+ ```
+ (gdb) s
+proc_readfd (file=0xffff88022ff63200, ctx=0xffffc90001a27ef0) at fs/proc/fd.c:272
+ ```
+ 
+ Dalej osiągnięto funkcję `proc_readfd_common()`:
+ 
+ ```
+228	static int proc_readfd_common(struct file *file, struct dir_context *ctx,
+229				      instantiate_t instantiate)
+230	{
+231		struct task_struct *p = get_proc_task(file_inode(file));
+232		struct files_struct *files;
+233		unsigned int fd;
+234	
+235		if (!p)
+236			return -ENOENT;
+237	
+238		if (!dir_emit_dots(file, ctx))
+239			goto out;
+240		files = get_files_struct(p);
+241		if (!files)
+242			goto out;
+243	
+244		rcu_read_lock();
+245		for (fd = ctx->pos - 2;
+(gdb) list
+246		     fd < files_fdtable(files)->max_fds;
+247		     fd++, ctx->pos++) {
+248			char name[PROC_NUMBUF];
+249			int len = 0;
+250	
+251			if (!fcheck_files(files, fd))
+252				continue;
+253			rcu_read_unlock();
+254	
+255			len = snprintf(name, len, "%u", fd);
+256			if (!proc_fill_cache(file, ctx,
+257					     name, len, instantiate, p,
+258					     (void *)(unsigned long)fd))
+259				goto out_fd_loop;
+260			cond_resched();
+261			rcu_read_lock();
+262		}
+263		rcu_read_unlock();
+264	out_fd_loop:
+265		put_files_struct(files);
+266	out:
+267		put_task_struct(p);
+268		return 0;
+269	}
+ ```
+ Pętla wykonuje się po kolejnych dekryptorach (więc założony został breakpoint na jej początek). Wywoływanie kroków (aż do wywołania `snprintf()`) spowodowało:
+ ```
+ (gdb) n
+255			len = snprintf(name, len, "%u", fd);
+(gdb) n
+256			if (!proc_fill_cache(file, ctx,
+(gdb) p name
+$0 = "\000\000\000\000\000\020\377\377\377\377\377\377\377"
+```
+Tablica nadal zawierała pusty string pomimo zastosowania funkcji `snprintf()`. Analiza tego miejsca pozwoliła zobaczyć, że do tej funkcji przekazywana jest len, które wynosi 0, po podstawieniu za len PROC_NUMBUF funkcja wygląda następująco:
+```
+		char name[PROC_NUMBUF];
+		int len = 0;
+
+		if (!fcheck_files(files, fd))
+			continue;
+		rcu_read_unlock();
+
+		len = snprintf(name, PROC_NUMBUF, "%u", fd); //zamiast PROC_NUMBUF było len (które wynosiło 0)
+```
+ Po naprawie przetestowano działanie:
+ ```
+  [root@localhost ~]# ls /proc/self/fd
+  0  1  2  3
+   
+ ```
  **3. `proc/PID/environ`**
