@@ -107,11 +107,11 @@
    
    Funkcja `fill_buffer()`:
    ```
-   	int fill_buffer(char *buf, int buf_size)
-	{
-        	sprintf(buf, "I've created a buffer of size: %d\n", buf_size);
-        	return strlen(buf); // było strlen(mybuf) który nie był ani przekazywany ani inicjalizowany w funkcji.
-	}
+   int fill_buffer(char *buf, int buf_size)
+   {
+        sprintf(buf, "I've created a buffer of size: %d\n", buf_size);
+        return strlen(buf); // było strlen(mybuf) który nie był ani przekazywany ani inicjalizowany w funkcji.
+   }
    ```
    
    Wyniki testowe wyglądały tak samo jak w module nr 1, który znajduje się powyżej.
