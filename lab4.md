@@ -1,7 +1,7 @@
 # Programowanie Systemowe<br/> Debugowanie jądra - sprawozdanie<br/>Piotr Świderski śr 12:50 - 14:40
 
 ## 1. Debugowanie modułów
-  1. Moduł 1
+ 1. Moduł 1
         
         Moduł został załadowany:
         ```
@@ -78,7 +78,8 @@
     BROKEN. Reads: 2, Writes: 14
 
 
-  2. Moduł 2
+ 2. Moduł 2
+  
    Postąpiono podobnie jak poprzednio, komunikaty po wywołaniu `cat /dev/broken`:
    
        [root@ps2017 2]# cat /dev/broken
@@ -114,10 +115,10 @@
    
    Wyniki testowe wyglądały tak samo jak w module nr 1, który znajduje się powyżej.
    
-  3. Moduł 3
-  4. Moduł 4
+ 3. Moduł 3
+ 4. Moduł 4
 
 ## 2. GDB
-  1. `/proc/loadavg`
-  2. `proc/PID/fd`
-  3. `proc/PID/environ`
+ 1. `/proc/loadavg`
+ 2. `proc/PID/fd`
+ 3. `proc/PID/environ`
