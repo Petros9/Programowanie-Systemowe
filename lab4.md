@@ -87,10 +87,11 @@
        
    Oraz `dmesg`:
    
-   `
+   ```
         [  3466.319942] BUG: unable to handle kernel NULL pointer dereference at (null)
         [  3487.771975] IP: [<fffffffffffffbc4031fd>] memcpy_orig+0x9d/0x110   
-    `
+   ```
+    
    Jak widać nastąpiło odwołanie do adresu null wewnątrz funkcji memcpy(). Możliwe, że przekazano do jakiejś funkcji jądra niezainicjolizowany wskaźnik.
     
    Sekcji Call Trace:
