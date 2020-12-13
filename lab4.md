@@ -210,5 +210,53 @@ I've recenlty read 3 numeric characters
 
 ## 2. GDB
  **1. `/proc/loadavg`**
- **2. `proc/PID/fd`**
+ 
+ Przed wykonywaniem zadań skompilowane zostało jądro oraz uruchomione QEMU z sesją GDB ustawioną na `target remote :1234`.
+ 
+ Wynik komendy `cat /proc/loadavg`:
+ 
+ ```
+ [root@localhost ~]#cat /proc/loadavg
+ Killed
+ ```
+ Wynik komendy `dmesg`
+ ```
+ [   52.371269] RIP: seq_printf+0x8/0x50 RSP: ffffc90000303d00
+ ```
+ Można zaobserwować, że problem nastąpił przy wywoływaniu funkcji `seq_printf()`.
+ 
+ Wobec tego w GDB ustawiono breakpoint na funkcji `seq_printf()` i wywołano funkcje ponownie
+ ```
+ Continuing
+ Breakpoint 1, 0xfffffffffff811afb34 in seq_printf()
+ (gdb) by
+ #0 0xfffffffffffff811af34 in seq_printf ()
+ #1 0xfffffffffffff811f912 in loadavg_proc_show ()
+ #2 0x00000000000000000000 in ?? ()
+ ```
+ Można z tego wywnioskować, że błąd znajduje się w funkcji `load_proc_show()`:
+ 
+ ```
+ static int loadavg_proc_show(struct seq_file *m, void *v)
+ {
+ 	unsigned long avnrun[3];
+	
+	get_avenrun(avnrun, FIXED_1/200, 0);
+	
+	seq_printf(m, "%lu.%02lu %lu.%02lu %lu.%02lu %ld/%d %d\n", // było v zamiast m
+		LOAD_INT(avnrun[0]), LOAD_FRAC(avnrun[0]),
+		LOAD_INT(avnrun[1]), LOAD_FRAC(avnrun[1]),
+		LOAD_INT(avnrun[2]), LOAD_FRAC(avnrun[2]),
+		nr_running(), nr_threads,
+		task_active_pid_ns(current)->last_pid);
+	return 0;
+ }
+ ```
+ Do `seq_printf()` przekazywano wskaźnik typu void zamiast strukturęseq_file. Wynik działania komendy do naprawie:
+ ```
+  [root@localhost ~]#cat /proc/loadavg
+  [0.68 0.19 0.06 1/64 1491
+  [root@localhost ~]#
+ ```
+  **2. `proc/PID/fd`**
  **3. `proc/PID/environ`**
