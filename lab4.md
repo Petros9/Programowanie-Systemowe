@@ -59,24 +59,24 @@
  W module znajdowała się także nic nie robiąca funkcja `broken_write`, a najpewniej powinna służyć do zliczania zapisów do /dev/broken, więc została ona zmodyfikowana w następujący sposób:
 
     ```
-    ssize_t broken_write(struct file *filp, const char *user_buf, size_t count,loff_t *f_pos)
+   ssize_t broken_write(struct file *filp, const char *user_buf, size_t count,loff_t *f_pos)
     {
-        write_count++; // wcześniej tu tego nie było
-        return 1;
-    }
+      	write_count++; // wcześniej tu tego nie było
+       return 1;
+   }
     ```
 
 Po wprowadzeniu modyfikacji przetestowano poprawność działania modułu:
 
-    ```
-    [root@ps2017 ~]$ echo "test" > /dev/broken
-    [root@ps2017 ~]$ echo "szklanka" > /dev/broken
-    [root@ps2017 ~]$ cat /dev/broken
-    I've created a buffer of size: 100
-    [root@ps2017 ~]$ cat /proc/broken | head -2
-    BROKEN. Reads: 2, Writes: 14
-    BROKEN. Reads: 2, Writes: 14
-    ```
+   ```
+   [root@ps2017 ~]$ echo "test" > /dev/broken
+   [root@ps2017 ~]$ echo "szklanka" > /dev/broken
+   [root@ps2017 ~]$ cat /dev/broken
+   I've created a buffer of size: 100
+   [root@ps2017 ~]$ cat /proc/broken | head -2
+   BROKEN. Reads: 2, Writes: 14
+   BROKEN. Reads: 2, Writes: 14
+   ```
 
    2. Moduł 2
    3. Moduł 3
