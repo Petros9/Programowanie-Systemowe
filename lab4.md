@@ -54,7 +54,7 @@
 	        }
             return 0;
         }
-        
+        ```
 
     W miejscu oznaczonym "//" znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybuf".
 
