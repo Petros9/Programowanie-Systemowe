@@ -22,7 +22,7 @@
 
         ```
         [   2398.704379] RIP [<ffffffffffffffbc230653>] kfree+0x53/0x170
-        ``````
+        ```
 
         Z powyższych komunikatów można wywnioskować, że problem pojawił się przy wywoływaniu funkcji kfree() w funkcji broken_read().
 
@@ -54,9 +54,9 @@
         }
         ```
   
-    W miejscu oznaczonym // znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybu
+W miejscu oznaczonym // znajdował się wskaźnik na przestrzeń użytkownika, a wydaje się, że powinien być zwalniany zaalokowany wcześniej w samej funkcji bufor "mybu
 
-    W module znajdowała się także nic nie robiąca funkcja `broken_write`, a najpewniej powinna służyć do zliczania zapisów do /dev/broken, więc została ona zmodyfikowana w następujący sposób:
+ W module znajdowała się także nic nie robiąca funkcja `broken_write`, a najpewniej powinna służyć do zliczania zapisów do /dev/broken, więc została ona zmodyfikowana w następujący sposób:
 
     ```
     ssize_t broken_write(struct file *filp, const char *user_buf, size_t count,loff_t *f_pos)
@@ -66,7 +66,7 @@
     }
     ```
 
-    Po wprowadzeniu modyfikacji przetestowano poprawność działania modułu:
+Po wprowadzeniu modyfikacji przetestowano poprawność działania modułu:
 
     ```
     [root@ps2017 ~]$ echo "test" > /dev/broken
