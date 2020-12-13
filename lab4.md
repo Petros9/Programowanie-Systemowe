@@ -28,8 +28,8 @@
 
         Funkcja broken_read():
 	 ```
-        ssize_t broken_read(struct file *filp, char *user_buf, size_t count,loff_t *f_pos)
-        {
+         ssize_t broken_read(struct file *filp, char *user_buf, size_t count,loff_t *f_pos)
+         {
  	        char *mybuf = NULL;
             	int mybuf_size = 100;
 	        int len, err;
