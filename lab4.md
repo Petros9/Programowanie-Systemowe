@@ -523,7 +523,9 @@ Najpewniej w pętli while wykonują się właściwe operacje (tj. kopiowanie dan
 Po zaaplikowaniu tej zmiany pokazały się między innymi takie dane jak HOSTNAME, TERM, SHELL, HISTSIZE.
 
  **3. `proc/PID/environ` problemy z częstym używaniem pliku**
+ 
  Przy probie zapisu wyniku `cat proc/self/environ` w pętli do jakieś maszyny po jamkiś czasie zaczęły pojawiać się komunikaty:
+ 
  ```
  cat: /proc/self/environL Cannot allocate memory
  ```
