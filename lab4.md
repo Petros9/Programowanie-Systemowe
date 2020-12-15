@@ -16,14 +16,14 @@
         Killed
         ```
    Przydatne informacje uzyskane po wywołaniu komendy `dmesg`:
-        ```
-        [   2398.704348] Call Trace:
-        [   2398.704353] [<ffffffffffffffc07cb354>] broken_read+0x150/0x195 [broken_module]      
-        ```
+ ```
+ [   2398.704348] Call Trace:
+ [   2398.704353] [<ffffffffffffffc07cb354>] broken_read+0x150/0x195 [broken_module]      
+ ```
 
-        ```
-        [   2398.704379] RIP [<ffffffffffffffbc230653>] kfree+0x53/0x170
-        ```
+```
+ [   2398.704379] RIP [<ffffffffffffffbc230653>] kfree+0x53/0x170
+```
 
    Z powyższych komunikatów można wywnioskować, że problem pojawił się przy wywoływaniu funkcji kfree() w funkcji broken_read().
 
