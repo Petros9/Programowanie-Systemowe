@@ -4,9 +4,10 @@
  **1. Moduł 1**
         
    Moduł został załadowany:
+   
         ```
-        [   298.506783] broken_module: loading out-of-tree module tains kernel.
-        [   298.506896] The BROKEN module has been inserted
+             [   298.506783] broken_module: loading out-of-tree module tains kernel.
+             [   298.506896] The BROKEN module has been inserted
         ```
         Wywołana została komenda `cat /dev/broken` (operacja została zabita)
 
