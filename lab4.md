@@ -9,12 +9,12 @@
    [   298.506783] broken_module: loading out-of-tree module tains kernel.
    [   298.506896] The BROKEN module has been inserted
    ```
-        Wywołana została komenda `cat /dev/broken` (operacja została zabita)
+Wywołana została komenda `cat /dev/broken` (operacja została zabita)
 
-        ```
-        [student@ps2017 dev]$ sudo cat /dev/broken
-        Killed
-        ```
+ ```
+ [student@ps2017 dev]$ sudo cat /dev/broken
+ Killed
+ ```
    Przydatne informacje uzyskane po wywołaniu komendy `dmesg`:
  ```
  [   2398.704348] Call Trace:
