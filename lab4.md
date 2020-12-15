@@ -3,7 +3,7 @@
 ## 1. Debugowanie modułów
  **1. Moduł 1**
         
-        Moduł został załadowany:
+   Moduł został załadowany:
         ```
         [   298.506783] broken_module: loading out-of-tree module tains kernel.
         [   298.506896] The BROKEN module has been inserted
@@ -14,7 +14,7 @@
         [student@ps2017 dev]$ sudo cat /dev/broken
         Killed
         ```
-        Przydatne informacje uzyskane po wywołaniu komendy `dmesg`:
+   Przydatne informacje uzyskane po wywołaniu komendy `dmesg`:
         ```
         [   2398.704348] Call Trace:
         [   2398.704353] [<ffffffffffffffc07cb354>] broken_read+0x150/0x195 [broken_module]      
@@ -24,9 +24,9 @@
         [   2398.704379] RIP [<ffffffffffffffbc230653>] kfree+0x53/0x170
         ```
 
-        Z powyższych komunikatów można wywnioskować, że problem pojawił się przy wywoływaniu funkcji kfree() w funkcji broken_read().
+   Z powyższych komunikatów można wywnioskować, że problem pojawił się przy wywoływaniu funkcji kfree() w funkcji broken_read().
 
-        Funkcja broken_read():
+   Funkcja broken_read():
 
         ```
         ssize_t broken_read(struct file *filp, char *user_buf, size_t count,loff_t *f_pos)
