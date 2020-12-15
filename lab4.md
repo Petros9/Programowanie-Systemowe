@@ -234,7 +234,7 @@ I've recenlty read 3 numeric characters
  #1 0xfffffffffffff811f912 in loadavg_proc_show ()
  #2 0x00000000000000000000 in ?? ()
  ```
- Można z tego wywnioskować, że błąd znajduje się w funkcji `load_proc_show()`:
+ Można z tego wywnioskować, że błąd znajduje się w funkcji `loadavg_proc_show()`:
  
  ```
  static int loadavg_proc_show(struct seq_file *m, void *v)
